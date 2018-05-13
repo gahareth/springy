@@ -65,8 +65,12 @@ def RK4SecondOrder(value, step, function, time = 0):
     value.derivative += (derivativeCoefficients[0] + 2 * derivativeCoefficients[1] + 2 * derivativeCoefficients[2] + derivativeCoefficients[3]) / 6
     value.value += (valueCoefficients[0] + 2 * valueCoefficients[1] + 2 * valueCoefficients[2] + valueCoefficients[3]) / 6
  
-def SimulateSpring(Mass, SpringConstant, DampingCoefficient, Duration, TimeStep):
-    load = Load(LoadKg)
+def SimulateSpring(Mass, SpringConstant, DampingRatio, TimeStep):
+    load = Load(Mass)
+    CriticalDampingCoefficient = 2 * math.sqrt(SpringConstant * Mass)
+    TimeConstant = 1 / math.sqrt(SpringConstant / Mass)
+    Duration = 20 * TimeConstant
+    DampingCoefficient = DampingRatio * CriticalDampingCoefficient
     springEuler = EulerSpring(0, SpringConstant, load, DampingCoefficient)
     springRungeKutta = RungeKuttaSpring(0, SpringConstant, load, DampingCoefficient)
     DataRungeKutta = []
@@ -89,9 +93,8 @@ def main(argv):
     Mass = float(argv[1])
     SpringConstant = float(argv[2])
     DampingCoefficient = float(argv[3])
-    Duration = float(argv[4])
-    TimeStep = float(argv[5])
-    SimulateSpring(Mass, SpringConstant, DampingCoefficient, Duration, TimeStep)
+    TimeStep = float(argv[4])
+    SimulateSpring(Mass, SpringConstant, DampingCoefficient, TimeStep)
 
 if __name__ == "__main__":
     main(sys.argv)
