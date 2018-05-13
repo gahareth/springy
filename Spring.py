@@ -2,7 +2,6 @@ import math
 import matplotlib.pyplot as plt
 import sys
 
-TimeStep = 0.001
 LoadKg = 10
 
 AccelerationDueToGravity = 9.8
@@ -18,24 +17,42 @@ class PhysicalQuantity:
         self.derivative = InitialDerivative
 
 class Spring:
-    def __init__(self, InitialDisplacement, SpringConstant, Load):
+    def __init__(self, InitialDisplacement, SpringConstant, Load, DampingCoefficient):
         self.Displacement = PhysicalQuantity(InitialDisplacement, 0)
         self.SpringConstant = SpringConstant
         self.Load = Load 
-        self.Force = self.Displacement.value * self.SpringConstant
-        self.DampingCoefficient = 0 
+        self.DampingCoefficient = DampingCoefficient
 
     def Update(self, TimeStep):
-        RK4SecondOrder(self.Displacement, TimeStep, lambda Time, Displacement, Velocity: self.Acceleration(Displacement, Velocity)) 
+        RK4SecondOrder(self.Displacement, TimeStep, lambda Time, Velocity, Displacement: self.Acceleration(Displacement, Velocity)) 
 
     def Acceleration(self, Displacement, Velocity):
         return (self.Load.Weight - self.DampingCoefficient * Velocity - self.SpringConstant * Displacement) / self.Load.Mass
+
+class RungeKuttaSpring(Spring):
+    def __init__(self, InitialDisplacement, SpringConstant, Load, DampingCoefficient):
+        Spring.__init__(self, InitialDisplacement, SpringConstant, Load, DampingCoefficient)
+
+    def Update(self, TimeStep):
+        RK4SecondOrder(self.Displacement, TimeStep, lambda Time, Velocity, Displacement: self.Acceleration(Displacement, Velocity)) 
+
+class EulerSpring(Spring):
+    def __init__(self, InitialDisplacement, SpringConstant, Load, DampingCoefficient):
+        Spring.__init__(self, InitialDisplacement, SpringConstant, Load, DampingCoefficient)
+
+    def Update(self, TimeStep):
+        Euler(self.Displacement, TimeStep, lambda Time, Velocity, Displacement: self.Acceleration(Displacement, Velocity)) 
+
+def Euler(value, step, function, time = 0):
+    initialValue = value.value
+    value.value += step * value.derivative
+    value.derivative += step * function(time, value.derivative, initialValue)
 
 def RK4SecondOrder(value, step, function, time = 0):
     derivativeCoefficients = []
     valueCoefficients = []
 
-    derivativeCoefficients.append(step * function(time, value.value, value.derivative))
+    derivativeCoefficients.append(step * function(time, value.derivative, value.value))
     valueCoefficients.append(step * value.derivative)
 
     for i in range(2):
@@ -48,19 +65,24 @@ def RK4SecondOrder(value, step, function, time = 0):
     value.derivative += (derivativeCoefficients[0] + 2 * derivativeCoefficients[1] + 2 * derivativeCoefficients[2] + derivativeCoefficients[3]) / 6
     value.value += (valueCoefficients[0] + 2 * valueCoefficients[1] + 2 * valueCoefficients[2] + valueCoefficients[3]) / 6
  
-def SimulateSpring(Mass, SpringConstant, DampingCoefficient, Duration):
+def SimulateSpring(Mass, SpringConstant, DampingCoefficient, Duration, TimeStep):
     load = Load(LoadKg)
-    spring = Spring(0, SpringConstant, load)
-    Data = []
+    springEuler = EulerSpring(0, SpringConstant, load, DampingCoefficient)
+    springRungeKutta = RungeKuttaSpring(0, SpringConstant, load, DampingCoefficient)
+    DataRungeKutta = []
+    DataEuler = []
     Timestamps = []
     time = 0
     while time < Duration:
-        spring.Update(TimeStep)
+        springEuler.Update(TimeStep)
+        springRungeKutta.Update(TimeStep)
         time += TimeStep
         Timestamps.append(time)    
-        Data.append(spring.Displacement.value)    
+        DataEuler.append(springEuler.Displacement.value)    
+        DataRungeKutta.append(springRungeKutta.Displacement.value)    
 
-    plt.plot(Timestamps, Data)
+    plt.plot(Timestamps, DataEuler)
+    plt.plot(Timestamps, DataRungeKutta)
     plt.show()
 
 def main(argv):
@@ -68,7 +90,8 @@ def main(argv):
     SpringConstant = float(argv[2])
     DampingCoefficient = float(argv[3])
     Duration = float(argv[4])
-    SimulateSpring(Mass, SpringConstant, DampingCoefficient, Duration)
+    TimeStep = float(argv[5])
+    SimulateSpring(Mass, SpringConstant, DampingCoefficient, Duration, TimeStep)
 
 if __name__ == "__main__":
     main(sys.argv)
