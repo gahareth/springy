@@ -29,7 +29,7 @@ class Spring:
         RK4SecondOrder(self.Displacement, TimeStep, lambda Time, Displacement, Velocity: self.Acceleration(Displacement, Velocity)) 
 
     def Acceleration(self, Displacement, Velocity):
-        return self.Load.Weight - self.DampingCoefficient * Velocity - self.SpringConstant * Displacement
+        return (self.Load.Weight - self.DampingCoefficient * Velocity - self.SpringConstant * Displacement) / self.Load.Mass
 
 def RK4SecondOrder(value, step, function, time = 0):
     derivativeCoefficients = []
@@ -45,7 +45,7 @@ def RK4SecondOrder(value, step, function, time = 0):
     derivativeCoefficients.append(step * function(time + step, value.derivative + derivativeCoefficients[-1], value.value + valueCoefficients[-1]))
     valueCoefficients.append(step * (value.derivative + derivativeCoefficients[-1]))
 
-    value.derivative += (valueCoefficients[0] + 2 * valueCoefficients[1] + 2 * valueCoefficients[2] + valueCoefficients[3]) / 6
+    value.derivative += (derivativeCoefficients[0] + 2 * derivativeCoefficients[1] + 2 * derivativeCoefficients[2] + derivativeCoefficients[3]) / 6
     value.value += (valueCoefficients[0] + 2 * valueCoefficients[1] + 2 * valueCoefficients[2] + valueCoefficients[3]) / 6
  
 def SimulateSpring(Mass, SpringConstant, DampingCoefficient, Duration):
