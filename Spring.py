@@ -65,6 +65,14 @@ def RK4SecondOrder(value, step, function, time = 0):
     value.derivative += (derivativeCoefficients[0] + 2 * derivativeCoefficients[1] + 2 * derivativeCoefficients[2] + derivativeCoefficients[3]) / 6
     value.value += (valueCoefficients[0] + 2 * valueCoefficients[1] + 2 * valueCoefficients[2] + valueCoefficients[3]) / 6
  
+def RK4FirstOrder(value, step, function, time = 0):
+    valueCoefficients = []
+    valueCoefficients.append(step * function(time, value))
+    for i in range(2):
+        valueCoefficients.append(step * function(time + step / 2, value + valueCoefficients[-1] / 2))
+    valueCoefficients.append(step * function(time + step, value + valueCoefficients[-1]))
+    return value += (valueCoefficients[0] + 2 * valueCoefficients[1] + 2 * valueCoefficients[2] + valueCoefficients[3]) / 6
+
 def SimulateSpring(Mass, SpringConstant, DampingRatio, TimeStep):
     load = Load(Mass)
     CriticalDampingCoefficient = 2 * math.sqrt(SpringConstant * Mass)
