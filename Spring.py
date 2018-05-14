@@ -7,13 +7,35 @@ from Core import Euler
 from Core import PhysicalQuantity
 from Load import Load
 
+class ComplexNumber():
+    def __init__(self, real, imaginary):
+        self.real = real
+        self.imaginary = imaginary
+
 class Spring:
     def __init__(self, InitialDisplacement, SpringConstant, Load, DampingCoefficient):
+        self.EquilibriumDisplacement = Load.Weight / SpringConstant  
+        self.InitialDisplacementFromEquilibrium = InitialDisplacement - self.EquilibriumDisplacement
         self.Displacement = PhysicalQuantity(InitialDisplacement, 0)
         self.SpringConstant = SpringConstant
         self.Load = Load 
         self.DampingCoefficient = DampingCoefficient
+        self.CalculatePoles()
 
+    def AnalyticalSolution(self, time):
+        return self.EquilibriumDisplacement + self.InitialDisplacementFromEquilibrium * math.exp(self.Poles[0].real * time) * math.cos(self.Poles[0].imaginary * time)
+
+    def CalculatePoles(self):
+        discriminant = self.DampingCoefficient ** 2 - 4 * self.Load.Mass * self.SpringConstant
+        if discriminant <= 0:
+            poleRealPart = -self.DampingCoefficient / (2 * self.Load.Mass)
+            poleImaginaryPart = math.sqrt(-discriminant) / (2 * self.Load.Mass)
+            self.Poles = [ComplexNumber(poleRealPart, poleImaginaryPart), ComplexNumber(poleRealPart, -poleImaginaryPart)]
+        else:
+            pole1 = (-self.DampingCoefficient + math.sqrt(discriminant)) / (2 * self.Load.Mass)
+            pole2 = (-self.DampingCoefficient - math.sqrt(discriminant)) / (2 * self.Load.Mass)
+            self.Poles = [ComplexNumber(pole1, 0), ComplexNumber(pole2, 0)]
+        
     def Update(self, TimeStep):
         RK4SecondOrder(self.Displacement, TimeStep, lambda Time, Velocity, Displacement: self.Acceleration(Displacement, Velocity)) 
 
@@ -42,6 +64,7 @@ def SimulateSpring(Mass, SpringConstant, DampingRatio, TimeStep):
     DampingCoefficient = DampingRatio * CriticalDampingCoefficient
     springEuler = EulerSpring(0, SpringConstant, load, DampingCoefficient)
     springRungeKutta = RungeKuttaSpring(0, SpringConstant, load, DampingCoefficient)
+    DataAnalytical = []
     DataRungeKutta = []
     DataEuler = []
     Timestamps = []
@@ -51,11 +74,16 @@ def SimulateSpring(Mass, SpringConstant, DampingRatio, TimeStep):
         springRungeKutta.Update(TimeStep)
         time += TimeStep
         Timestamps.append(time)    
+        DataAnalytical.append(springEuler.AnalyticalSolution(time))
         DataEuler.append(springEuler.Displacement.value)    
         DataRungeKutta.append(springRungeKutta.Displacement.value)    
 
-    plt.plot(Timestamps, DataEuler)
-    plt.plot(Timestamps, DataRungeKutta)
+    plt.plot(Timestamps, DataAnalytical, label='Actual')
+    plt.plot(Timestamps, DataEuler, label='Euler')
+    plt.plot(Timestamps, DataRungeKutta, label='Runge-Kutta')
+    plt.xlabel('time (s)')
+    plt.ylabel('displacement (m)')
+    plt.legend()
     plt.show()
 
 def main(argv):
