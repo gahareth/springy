@@ -16,8 +16,8 @@ class Spring:
     def __init__(self, InitialDisplacement, SpringConstant, Load, DampingCoefficient):
         self.EquilibriumDisplacement = Load.Weight / SpringConstant  
         self.InitialDisplacement = InitialDisplacement
-        self.InitialVelocity = InitialDisplacement - self.EquilibriumDisplacement
-        self.Displacement = PhysicalQuantity(InitialDisplacement, 0)
+        self.InitialVelocity = 0
+        self.Displacement = PhysicalQuantity(InitialDisplacement, self.InitialVelocity)
         self.SpringConstant = SpringConstant
         self.Load = Load 
         self.DampingCoefficient = DampingCoefficient
