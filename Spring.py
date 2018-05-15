@@ -15,7 +15,8 @@ class ComplexNumber():
 class Spring:
     def __init__(self, InitialDisplacement, SpringConstant, Load, DampingCoefficient):
         self.EquilibriumDisplacement = Load.Weight / SpringConstant  
-        self.InitialDisplacementFromEquilibrium = InitialDisplacement - self.EquilibriumDisplacement
+        self.InitialDisplacement = InitialDisplacement
+        self.InitialVelocity = InitialDisplacement - self.EquilibriumDisplacement
         self.Displacement = PhysicalQuantity(InitialDisplacement, 0)
         self.SpringConstant = SpringConstant
         self.Load = Load 
@@ -23,8 +24,8 @@ class Spring:
         self.CalculatePoles()
 
     def AnalyticalSolution(self, time):
-        return self.EquilibriumDisplacement + self.InitialDisplacementFromEquilibrium * math.exp(self.Poles[0].real * time) * math.cos(self.Poles[0].imaginary * time)
-
+        return self.EquilibriumDisplacement - (self.EquilibriumDisplacement * math.exp(self.Poles[0].real * time) * math.cos(self.Poles[0].imaginary * time) + (self.InitialVelocity / self.Poles[0].real) * math.exp(self.Poles[1].real * time) * math.sin(self.Poles[1].imaginary * time))
+        
     def CalculatePoles(self):
         discriminant = self.DampingCoefficient ** 2 - 4 * self.Load.Mass * self.SpringConstant
         if discriminant <= 0:
